@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Employee Payroll Management System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="login-container">
+
+    <div class="login-card">
+        <div class="login-brand">
+            <div class="brand-icon">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <div>
+                <h4 class="fw-bold mb-0 text-dark">PayMaster Pro</h4>
+                <small class="text-muted">Enterprise Payroll Management</small>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-2">Sign In</h5>
+        <p class="text-muted small mb-4">Enter administrative credentials to manage payroll and workforce records.</p>
+
+        <!-- Alert Notification -->
+        <div id="loginAlert" class="alert alert-danger d-none py-2 px-3 small" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <span id="loginAlertMsg">Invalid credentials</span>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="mb-3">
+                <label for="email" class="form-label small fw-semibold text-secondary">Administrator Email</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
+                    <input type="email" class="form-control border-start-0" id="email" placeholder="admin@payroll.com" required value="admin@payroll.com">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label for="password" class="form-label small fw-semibold text-secondary">Password</label>
+                </div>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+                    <input type="password" class="form-control border-start-0" id="password" placeholder="••••••••" required value="admin123">
+                </div>
+            </div>
+
+            <button type="submit" id="loginBtn" class="btn btn-primary w-100 py-2 fw-semibold">
+                <span id="loginBtnSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Dashboard
+            </button>
+        </form>
+
+        <!-- Quick Demo Bypass Button if backend is offline -->
+        <div id="demoBypassBox" class="mt-3 text-center d-none">
+            <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="enterDemoMode()">
+                <i class="bi bi-play-circle me-1"></i> Continue in Interactive Preview Mode
+            </button>
+            <div class="form-text small mt-1">Allows immediate UI testing while backend connects to MySQL.</div>
+        </div>
+
+        <div class="mt-4 pt-3 border-top">
+            <div class="badge bg-light text-dark border p-2 w-100 text-start">
+                <div class="fw-bold text-primary mb-1"><i class="bi bi-shield-check me-1"></i> Seeded Administrator Credentials:</div>
+                <div class="small text-muted"><strong>Email:</strong> admin@payroll.com</div>
+                <div class="small text-muted"><strong>Password:</strong> admin123</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const alertBox = document.getElementById('loginAlert');
+            const alertMsg = document.getElementById('loginAlertMsg');
+            const btn = document.getElementById('loginBtn');
+            const spinner = document.getElementById('loginBtnSpinner');
+            const demoBox = document.getElementById('demoBypassBox');
+
+            alertBox.classList.add('d-none');
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.authenticated) {
+                    sessionStorage.setItem('payroll_user', JSON.stringify(data));
+                    window.location.href = 'index.html';
+                } else {
+                    alertMsg.textContent = data.message || 'Invalid credentials. Use admin@payroll.com / admin123.';
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                // Backend not currently reachable
+                if (email === 'admin@payroll.com' && password === 'admin123') {
+                    // Valid credentials entered - give option to enter preview mode immediately
+                    enterDemoMode();
+                } else {
+                    alertMsg.textContent = 'Server connection pending. Click "Continue in Interactive Preview Mode" below to test the UI!';
+                    alertBox.classList.remove('d-none');
+                    demoBox.classList.remove('d-none');
+                }
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        }
+
+        function enterDemoMode() {
+            sessionStorage.setItem('payroll_user', JSON.stringify({
+                authenticated: true,
+                email: 'admin@payroll.com',
+                fullName: 'System Administrator',
+                role: 'ROLE_ADMIN',
+                isDemo: true
+            }));
+            window.location.href = 'index.html';
+        }
+
+        // Auto-check existing session
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const user = await res.json();
+                    if (user.authenticated) {
+                        window.location.href = 'index.html';
+                    }
+                }
+            } catch (e) {}
+        });
+    </script>
+</body>
+</html>

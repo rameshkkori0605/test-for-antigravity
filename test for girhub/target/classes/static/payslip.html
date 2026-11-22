@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Payslip - PayMaster Pro</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .salary-table th, .salary-table td {
+            padding: 0.65rem 1rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Top Action Bar (hidden when printed) -->
+    <div class="container py-3 no-print">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="index.html" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            </a>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-primary btn-sm">
+                    <i class="bi bi-printer-fill me-1"></i> Print / Save as PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Printable Payslip Document -->
+    <div class="payslip-container shadow-sm bg-white" id="payslipSheet">
+        <!-- Loading State -->
+        <div id="loadingBox" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Loading official payslip record...</p>
+        </div>
+
+        <div id="payslipContent" class="d-none">
+            <!-- Header -->
+            <div class="payslip-header d-flex justify-content-between align-items-start">
+                <div>
+                    <h2 class="payslip-company-title mb-1">ENTERPRISE PAYROLL CORP</h2>
+                    <div class="payslip-title-sub">
+                        <i class="bi bi-geo-alt me-1"></i> 742 Evergreen Corporate Park, Innovation Way, CA 94016<br>
+                        <i class="bi bi-envelope me-1"></i> payroll-finance@enterprisecorp.com | CIN: U72200CA2015PTC081234
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary px-3 py-2 fs-6 mb-2">SALARY SLIP</span>
+                    <div class="fw-bold text-dark fs-5" id="lblPayPeriod">November 2026</div>
+                    <small class="text-muted">Status: <span class="badge bg-success" id="lblStatus">PROCESSED</span></small>
+                </div>
+            </div>
+
+            <!-- Employee & Bank Info Grid -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="p-3 border rounded bg-light">
+                        <h6 class="fw-bold text-primary border-bottom pb-2 mb-2"><i class="bi bi-person-badge me-1"></i> Employee Summary</h6>
+                        <table class="w-100 small">
+                            <tr><td class="text-muted py-1" width="40%">Employee Name:</td><td class="fw-bold py-1" id="lblEmpName">Alexander Pierce</td></tr>
+                            <tr><td class="text-muted py-1">Employee Code:</td><td class="fw-semibold py-1" id="lblEmpCode">EMP-1001</td></tr>
+                            <tr><td class="text-muted py-1">Department:</td><td class="py-1" id="lblDept">Engineering</td></tr>
+                            <tr><td class="text-muted py-1">Designation:</td><td class="py-1" id="lblDesignation">Lead Backend Architect</td></tr>
+                            <tr><td class="text-muted py-1">Email ID:</td><td class="py-1" id="lblEmail">alex.pierce@company.com</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 border rounded bg-light">
+                        <h6 class="fw-bold text-primary border-bottom pb-2 mb-2"><i class="bi bi-bank me-1"></i> Bank & Attendance Details</h6>
+                        <table class="w-100 small">
+                            <tr><td class="text-muted py-1" width="40%">Bank Account:</td><td class="fw-bold py-1" id="lblBankAcc">9876543210123</td></tr>
+                            <tr><td class="text-muted py-1">IFSC / Code:</td><td class="fw-semibold py-1" id="lblIfsc">HDFC0001234</td></tr>
+                            <tr><td class="text-muted py-1">PAN / Tax ID:</td><td class="py-1" id="lblPan">ABCDE1234F</td></tr>
+                            <tr><td class="text-muted py-1">Working / Present Days:</td><td class="py-1" id="lblAttendanceDays">22 Days Total / 22 Days Present</td></tr>
+                            <tr><td class="text-muted py-1">LOP / Overtime Hours:</td><td class="py-1" id="lblLopOt">0 Unpaid Leaves / 10.0 hrs OT</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Itemized Earnings and Deductions Table -->
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered salary-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th width="35%">Earnings Component</th>
+                            <th width="15%" class="text-end">Amount (₹)</th>
+                            <th width="35%">Deductions Component</th>
+                            <th width="15%" class="text-end">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Basic Salary</td>
+                            <td class="text-end font-monospace" id="lblBasic">95,000.00</td>
+                            <td>Loss of Pay (LOP)</td>
+                            <td class="text-end font-monospace" id="lblLop">0.00</td>
+                        </tr>
+                        <tr>
+                            <td>House Rent Allowance (HRA)</td>
+                            <td class="text-end font-monospace" id="lblHra">38,000.00</td>
+                            <td>Provident Fund (PF - 12%)</td>
+                            <td class="text-end font-monospace" id="lblPf">11,400.00</td>
+                        </tr>
+                        <tr>
+                            <td>Special Allowances</td>
+                            <td class="text-end font-monospace" id="lblSpecial">15,000.00</td>
+                            <td>Professional Tax (PT)</td>
+                            <td class="text-end font-monospace" id="lblPt">200.00</td>
+                        </tr>
+                        <tr>
+                            <td>Overtime Pay</td>
+                            <td class="text-end font-monospace" id="lblOvertime">8,100.00</td>
+                            <td>Income Tax / TDS (Progressive)</td>
+                            <td class="text-end font-monospace" id="lblTds">15,200.00</td>
+                        </tr>
+                        <tr class="table-secondary fw-bold">
+                            <td>Gross Total Earnings</td>
+                            <td class="text-end font-monospace text-success" id="lblGross">₹ 1,56,100.00</td>
+                            <td>Total Deductions</td>
+                            <td class="text-end font-monospace text-danger" id="lblTotalDeductions">₹ 26,800.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Net Disbursed Card -->
+            <div class="card bg-primary-subtle border-primary mb-4">
+                <div class="card-body p-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <span class="text-secondary small fw-semibold text-uppercase">Net Disbursed Take-Home Salary:</span>
+                            <div class="small text-muted mt-1" id="lblNetWords">One Lakh Twenty Nine Thousand Three Hundred Rupees Only</div>
+                        </div>
+                        <div class="col-md-5 text-md-end mt-2 mt-md-0">
+                            <h3 class="fw-bolder text-primary mb-0 font-monospace" id="lblNetSalary">₹ 1,29,300.00</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signature Section -->
+            <div class="row pt-4 mt-5 text-center">
+                <div class="col-4">
+                    <div class="border-top pt-2 small text-muted">
+                        <strong>Employee Signature</strong>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="border-top pt-2 small text-muted">
+                        <strong>HR Verification</strong>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="border-top pt-2 small text-muted">
+                        <strong>Authorized Signatory / Finance</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top text-center text-muted" style="font-size: 0.75rem;">
+                * This payslip is a computer-generated payroll advice document from PayMaster Pro Enterprise Engine. No physical stamp required.
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (id) {
+                try {
+                    const res = await fetch(`/api/payroll/${id}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        renderPayslip(data);
+                        return;
+                    }
+                } catch (e) {}
+            }
+
+            // Fallback demo record if server not running or id not found
+            renderSamplePayslip();
+        });
+
+        function formatCurrency(val) {
+            return Number(val || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function renderPayslip(p) {
+            document.getElementById('loadingBox').classList.add('d-none');
+            document.getElementById('payslipContent').classList.remove('d-none');
+
+            document.getElementById('lblPayPeriod').textContent = `${p.monthName || 'November'} ${p.year || 2026}`;
+            document.getElementById('lblStatus').textContent = p.paymentStatus || 'PROCESSED';
+
+            document.getElementById('lblEmpName').textContent = p.employeeName;
+            document.getElementById('lblEmpCode').textContent = p.empCode;
+            document.getElementById('lblDept').textContent = p.department;
+            document.getElementById('lblDesignation').textContent = p.designation;
+            document.getElementById('lblEmail').textContent = p.email;
+
+            document.getElementById('lblBankAcc').textContent = p.bankAccountNumber;
+            document.getElementById('lblIfsc').textContent = p.ifscCode;
+            document.getElementById('lblPan').textContent = p.panNumber;
+            document.getElementById('lblAttendanceDays').textContent = `${p.totalWorkingDays || 22} Days Total / ${p.daysPresent || 22} Days Present`;
+            document.getElementById('lblLopOt').textContent = `${p.unpaidLeaves || 0} Unpaid Leaves / ${p.overtimeHours || 0} hrs OT`;
+
+            // Earnings
+            document.getElementById('lblBasic').textContent = formatCurrency(p.basicSalary);
+            document.getElementById('lblHra').textContent = formatCurrency(p.hra);
+            document.getElementById('lblSpecial').textContent = formatCurrency(p.specialAllowances);
+            document.getElementById('lblOvertime').textContent = formatCurrency(p.overtimePay);
+            document.getElementById('lblGross').textContent = '₹ ' + formatCurrency(p.grossSalary);
+
+            // Deductions
+            document.getElementById('lblLop').textContent = formatCurrency(p.lopDeduction);
+            document.getElementById('lblPf').textContent = formatCurrency(p.pfDeduction);
+            document.getElementById('lblPt').textContent = formatCurrency(p.ptDeduction);
+            document.getElementById('lblTds').textContent = formatCurrency(p.tdsDeduction);
+            document.getElementById('lblTotalDeductions').textContent = '₹ ' + formatCurrency(p.totalDeductions);
+
+            // Net
+            document.getElementById('lblNetSalary').textContent = '₹ ' + formatCurrency(p.netSalary);
+            document.getElementById('lblNetWords').textContent = p.netSalaryInWords || 'One Lakh Twenty Nine Thousand Three Hundred Rupees Only';
+        }
+
+        function renderSamplePayslip() {
+            document.getElementById('loadingBox').classList.add('d-none');
+            document.getElementById('payslipContent').classList.remove('d-none');
+        }
+    </script>
+</body>
+</html>
